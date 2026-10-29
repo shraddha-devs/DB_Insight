@@ -1,0 +1,155 @@
+-- Employee Management System schema and sample data (SQLite).
+PRAGMA foreign_keys = ON;
+
+CREATE TABLE department (
+    department_id INTEGER PRIMARY KEY,
+    department_name VARCHAR(100) NOT NULL UNIQUE,
+    location VARCHAR(150),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE employees (
+    employee_id INTEGER PRIMARY KEY,
+    department_id INTEGER NOT NULL,
+    first_name VARCHAR(80) NOT NULL,
+    last_name VARCHAR(80) NOT NULL,
+    email VARCHAR(254) NOT NULL UNIQUE,
+    job_title VARCHAR(120) NOT NULL,
+    hire_date TEXT NOT NULL,
+    salary NUMERIC(12, 2) NOT NULL CHECK (salary >= 0),
+    employment_status VARCHAR(20) NOT NULL DEFAULT 'active'
+        CHECK (employment_status IN ('active', 'on_leave', 'terminated')),
+    CONSTRAINT fk_employees_department
+        FOREIGN KEY (department_id)
+        REFERENCES department (department_id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE projects (
+    project_id INTEGER PRIMARY KEY,
+    project_code VARCHAR(30) NOT NULL UNIQUE,
+    project_name VARCHAR(150) NOT NULL,
+    start_date TEXT,
+    end_date TEXT,
+    project_status VARCHAR(20) NOT NULL DEFAULT 'planned'
+        CHECK (project_status IN ('planned', 'active', 'on_hold', 'completed')),
+    CONSTRAINT chk_projects_date_order
+        CHECK (end_date IS NULL OR start_date IS NULL OR end_date >= start_date)
+);
+
+CREATE TABLE employee_projects (
+    employee_id INTEGER NOT NULL,
+    project_id INTEGER NOT NULL,
+    assigned_on TEXT NOT NULL DEFAULT CURRENT_DATE,
+    project_role VARCHAR(100),
+    allocation_percent NUMERIC(5, 2) NOT NULL DEFAULT 100.00
+        CHECK (allocation_percent >= 0 AND allocation_percent <= 100),
+    CONSTRAINT pk_employee_projects PRIMARY KEY (employee_id, project_id),
+    CONSTRAINT fk_employee_projects_employee
+        FOREIGN KEY (employee_id)
+        REFERENCES employees (employee_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_employee_projects_project
+        FOREIGN KEY (project_id)
+        REFERENCES projects (project_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
+CREATE INDEX idx_employees_department_id ON employees (department_id);
+CREATE INDEX idx_employee_projects_project_id ON employee_projects (project_id);
+
+INSERT INTO department (department_name, location)
+VALUES
+    ('Engineering', 'Seattle'),
+    ('Human Resources', 'Chicago'),
+    ('Finance', 'New York'),
+    ('Sales', 'Austin'),
+    ('Operations', 'Denver');
+
+INSERT INTO employees
+    (department_id, first_name, last_name, email, job_title, hire_date, salary, employment_status)
+VALUES
+    ((SELECT department_id FROM department WHERE department_name = 'Engineering'),
+     'Ava', 'Patel', 'ava.patel@example.com', 'Software Engineer', '2022-04-18', 98000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Engineering'),
+     'Noah', 'Kim', 'noah.kim@example.com', 'Database Administrator', '2021-09-06', 112000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Engineering'),
+     'Mia', 'Garcia', 'mia.garcia@example.com', 'Data Analyst', '2023-01-23', 87000.00, 'on_leave'),
+    ((SELECT department_id FROM department WHERE department_name = 'Human Resources'),
+     'Liam', 'Brown', 'liam.brown@example.com', 'HR Specialist', '2020-06-15', 76000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Engineering'),
+     'Ethan', 'Wilson', 'ethan.wilson@example.com', 'DevOps Engineer', '2022-11-07', 105000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Human Resources'),
+     'Emma', 'Davis', 'emma.davis@example.com', 'Recruiter', '2021-03-15', 72000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Human Resources'),
+     'Oliver', 'Martin', 'oliver.martin@example.com', 'HR Business Partner', '2019-08-12', 89000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Human Resources'),
+     'Sophia', 'Turner', 'sophia.turner@example.com', 'Learning Specialist', '2023-05-22', 74000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Finance'),
+     'Isabella', 'Chen', 'isabella.chen@example.com', 'Financial Analyst', '2020-02-10', 91000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Finance'),
+     'Lucas', 'Moore', 'lucas.moore@example.com', 'Accountant', '2021-07-19', 79000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Finance'),
+     'Amelia', 'Clark', 'amelia.clark@example.com', 'Finance Manager', '2018-10-01', 118000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Finance'),
+     'James', 'Hall', 'james.hall@example.com', 'Payroll Analyst', '2022-01-24', 82000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Sales'),
+     'Charlotte', 'Lewis', 'charlotte.lewis@example.com', 'Account Executive', '2021-04-05', 85000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Sales'),
+     'Benjamin', 'Walker', 'benjamin.walker@example.com', 'Sales Manager', '2019-02-18', 110000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Sales'),
+     'Harper', 'Young', 'harper.young@example.com', 'Sales Operations Analyst', '2023-06-12', 78000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Sales'),
+     'Daniel', 'Allen', 'daniel.allen@example.com', 'Customer Success Manager', '2020-09-14', 88000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Operations'),
+     'Evelyn', 'King', 'evelyn.king@example.com', 'Operations Manager', '2018-05-21', 102000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Operations'),
+     'Henry', 'Scott', 'henry.scott@example.com', 'Logistics Coordinator', '2022-08-08', 69000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Operations'),
+     'Abigail', 'Green', 'abigail.green@example.com', 'Process Analyst', '2021-11-29', 81000.00, 'active'),
+    ((SELECT department_id FROM department WHERE department_name = 'Operations'),
+     'Samuel', 'Baker', 'samuel.baker@example.com', 'Facilities Specialist', '2023-02-13', 67000.00, 'active');
+
+INSERT INTO projects (project_code, project_name, start_date, end_date, project_status)
+VALUES
+    ('HRIS-2026', 'HR Information System', '2026-01-12', '2026-12-18', 'active'),
+    ('DATA-PLAT', 'Analytics Platform', '2026-03-02', NULL, 'active'),
+    ('ONBOARD', 'Employee Onboarding Refresh', '2027-01-04', '2027-06-30', 'planned'),
+    ('PAYROLL', 'Payroll Modernization', '2026-02-01', '2026-12-31', 'active'),
+    ('CRM-ROLL', 'Customer CRM Rollout', '2026-04-06', '2027-01-31', 'active'),
+    ('SEC-BASE', 'Security Baseline Upgrade', '2026-06-01', '2026-11-30', 'active'),
+    ('SUPPLY-DASH', 'Supply Chain Dashboard', '2027-02-01', '2027-08-31', 'planned'),
+    ('CLOUD-MIG', 'Cloud Infrastructure Migration', '2027-03-01', '2027-12-15', 'planned'),
+    ('CLIENT-PORTAL', 'Customer Self-Service Portal', '2026-07-01', '2027-03-31', 'active'),
+    ('LEAD-DEV', 'Leadership Development Program', '2027-01-11', '2027-10-29', 'planned');
+
+INSERT INTO employee_projects
+    (employee_id, project_id, assigned_on, project_role, allocation_percent)
+VALUES
+    ((SELECT employee_id FROM employees WHERE email = 'ava.patel@example.com'),
+     (SELECT project_id FROM projects WHERE project_code = 'HRIS-2026'), '2026-01-12', 'Backend Engineer', 60.00),
+    ((SELECT employee_id FROM employees WHERE email = 'noah.kim@example.com'),
+     (SELECT project_id FROM projects WHERE project_code = 'HRIS-2026'), '2026-01-12', 'Database Administrator', 40.00),
+    ((SELECT employee_id FROM employees WHERE email = 'mia.garcia@example.com'),
+     (SELECT project_id FROM projects WHERE project_code = 'DATA-PLAT'), '2026-03-02', 'Data Analyst', 75.00),
+    ((SELECT employee_id FROM employees WHERE email = 'ava.patel@example.com'),
+     (SELECT project_id FROM projects WHERE project_code = 'DATA-PLAT'), '2026-03-02', 'Contributor', 25.00),
+    ((SELECT employee_id FROM employees WHERE email = 'liam.brown@example.com'),
+     (SELECT project_id FROM projects WHERE project_code = 'ONBOARD'), '2027-01-04', 'Project Lead', 50.00),
+    ((SELECT employee_id FROM employees WHERE email = 'james.hall@example.com'),
+     (SELECT project_id FROM projects WHERE project_code = 'PAYROLL'), '2026-02-01', 'Payroll Analyst', 60.00),
+    ((SELECT employee_id FROM employees WHERE email = 'charlotte.lewis@example.com'),
+     (SELECT project_id FROM projects WHERE project_code = 'CRM-ROLL'), '2026-04-06', 'Sales Representative', 50.00),
+    ((SELECT employee_id FROM employees WHERE email = 'ethan.wilson@example.com'),
+     (SELECT project_id FROM projects WHERE project_code = 'SEC-BASE'), '2026-06-01', 'DevOps Engineer', 40.00),
+    ((SELECT employee_id FROM employees WHERE email = 'evelyn.king@example.com'),
+     (SELECT project_id FROM projects WHERE project_code = 'SUPPLY-DASH'), '2027-02-01', 'Operations Lead', 35.00),
+    ((SELECT employee_id FROM employees WHERE email = 'noah.kim@example.com'),
+     (SELECT project_id FROM projects WHERE project_code = 'CLOUD-MIG'), '2027-03-01', 'Database Administrator', 50.00),
+    ((SELECT employee_id FROM employees WHERE email = 'daniel.allen@example.com'),
+     (SELECT project_id FROM projects WHERE project_code = 'CLIENT-PORTAL'), '2026-07-01', 'Customer Success Lead', 45.00),
+    ((SELECT employee_id FROM employees WHERE email = 'sophia.turner@example.com'),
+     (SELECT project_id FROM projects WHERE project_code = 'LEAD-DEV'), '2027-01-11', 'Learning Specialist', 40.00);

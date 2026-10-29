@@ -1,0 +1,34 @@
+services:
+  insightsql:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      INSIGHTSQL_HOST: 0.0.0.0
+      INSIGHTSQL_PORT: 8000
+      INSIGHTSQL_DATABASE_PATH: /data/employee_management.db
+      INSIGHTSQL_HISTORY_PATH: /app/data/query_history.sqlite3
+      INSIGHTSQL_ALLOWED_HOSTS: localhost,127.0.0.1
+      INSIGHTSQL_USERNAME: ${INSIGHTSQL_USERNAME:?Set INSIGHTSQL_USERNAME in .env}
+      INSIGHTSQL_PASSWORD: ${INSIGHTSQL_PASSWORD:?Set INSIGHTSQL_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./employee_management.db:/data/employee_management.db:ro
+      - query-history:/app/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=2)"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  query-history:

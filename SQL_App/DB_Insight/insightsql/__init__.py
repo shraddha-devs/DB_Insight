@@ -1,0 +1,1 @@
+"""InsightSQL application package."""

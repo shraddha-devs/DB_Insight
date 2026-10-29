@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f7f4">
+  <meta name="description" content="Ask questions about your SQLite data and inspect safe, read-only SQL results.">
+  <title>InsightSQL | Data workbench</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Workspace navigation">
+      <a class="brand" href="/" aria-label="InsightSQL home">
+        <span class="brand-mark" aria-hidden="true">I</span>
+        <span class="brand-name">Insight<span>SQL</span></span>
+      </a>
+
+      <div class="workspace-label">WORKSPACE</div>
+      <button class="nav-item nav-item-active" type="button" aria-current="page">
+        <span class="nav-glyph" aria-hidden="true">⌕</span> Query workbench
+      </button>
+
+      <div class="sidebar-section">
+        <div class="section-heading">
+          <span>DATA CATALOG</span>
+          <span class="catalog-count" id="table-count">…</span>
+        </div>
+        <div class="schema-list" id="schema-list" aria-live="polite">
+          <div class="sidebar-placeholder">Loading tables</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section history-section">
+        <div class="section-heading">
+          <span>RECENT QUERIES</span>
+          <button class="text-action" id="clear-history" type="button" title="Clear query history">Clear</button>
+        </div>
+        <div class="history-list" id="history-list" aria-live="polite">
+          <div class="sidebar-placeholder">No queries yet</div>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>Local SQLite connection</span>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="breadcrumb"><span>Workspace</span><span class="breadcrumb-divider">/</span><strong>Query workbench</strong></div>
+        <div class="topbar-right">
+          <button class="mobile-history-button" id="mobile-history-toggle" type="button" aria-expanded="false" aria-controls="history-list">History</button>
+          <span class="read-only-label"><span aria-hidden="true">◉</span> READ ONLY</span>
+          <span class="connection-label"><span class="status-dot" aria-hidden="true"></span> Connected</span>
+        </div>
+      </header>
+
+      <div class="work-area">
+        <section class="intro-row" aria-labelledby="page-title">
+          <div>
+            <p class="eyebrow">EMPLOYEE MANAGEMENT DATABASE</p>
+            <h1 id="page-title">Ask your data<span>.</span></h1>
+            <p class="intro-copy">Explore your workforce with natural language or write SQL directly.</p>
+          </div>
+          <div class="database-chip"><span class="database-icon" aria-hidden="true">▤</span><span>employee_management.db</span></div>
+        </section>
+
+        <section class="question-panel" aria-labelledby="question-title">
+          <div class="panel-kicker"><span class="step-number">01</span><h2 id="question-title">Ask a question</h2></div>
+          <label class="visually-hidden" for="question-input">Describe the data you want to explore</label>
+          <textarea id="question-input" maxlength="1000" rows="2" placeholder="How many employees are in each department?" spellcheck="false"></textarea>
+          <div class="question-footer">
+            <div class="suggestions" aria-label="Example questions">
+              <button type="button" class="suggestion" data-question="How many employees are in each department?">Employees by department</button>
+              <button type="button" class="suggestion" data-question="Which projects are active?">Active projects</button>
+              <button type="button" class="suggestion" data-question="Show employees assigned to each project">Project assignments</button>
+            </div>
+            <button type="button" class="button button-primary" id="generate-button">
+              <span class="button-symbol" aria-hidden="true">✳</span> Generate SQL
+            </button>
+          </div>
+          <p class="inline-message" id="question-message" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="sql-panel" aria-labelledby="sql-title">
+          <div class="panel-heading">
+            <div class="panel-kicker"><span class="step-number">02</span><h2 id="sql-title">Review SQL</h2></div>
+            <div class="sql-actions">
+              <span class="language-label">SQLITE</span>
+              <button type="button" class="button button-secondary" id="copy-button" title="Copy SQL to clipboard">Copy SQL</button>
+              <button type="button" class="button button-run" id="run-button" title="Run query (Ctrl+Enter)">
+                <span aria-hidden="true">▶</span> Run query
+              </button>
+            </div>
+          </div>
+          <label class="visually-hidden" for="sql-editor">Generated or edited read-only SQL query</label>
+          <div class="editor-wrap">
+            <div class="line-gutter" id="line-gutter" aria-hidden="true">1</div>
+            <textarea id="sql-editor" aria-describedby="sql-help" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="-- Your generated SQL will appear here&#10;SELECT department_name, COUNT(*) AS employee_count&#10;FROM department&#10;JOIN employees USING (department_id)&#10;GROUP BY department_name;"></textarea>
+          </div>
+          <div class="editor-footer">
+            <p id="sql-help">Only a single read-only SELECT on approved tables can run. Results are capped.</p>
+            <span class="editor-position" id="editor-position">Ln 1, Col 1</span>
+          </div>
+        </section>
+
+        <section class="results-panel" aria-labelledby="results-title">
+          <div class="results-heading">
+            <div class="panel-kicker"><span class="step-number">03</span><h2 id="results-title">Results</h2><span class="result-count" id="result-count"></span></div>
+            <span class="run-duration" id="run-duration"></span>
+          </div>
+          <div class="results-content" id="results-content" aria-live="polite">
+            <div class="empty-results">
+              <span class="empty-mark" aria-hidden="true">⌁</span>
+              <p>Your results will appear here</p>
+              <span>Ask a question or enter a read-only SELECT query.</span>
+            </div>
+          </div>
+          <p class="inline-message results-message" id="results-message" role="status" aria-live="polite"></p>
+        </section>
+
+        <footer class="work-footer">
+          <span>Queries run against a read-only connection.</span>
+          <a href="/api/health" target="_blank" rel="noreferrer">Service status <span aria-hidden="true">↗</span></a>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
